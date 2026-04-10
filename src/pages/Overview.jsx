@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 import { getFilteredThemes, FILTER_OPTIONS } from '../data/themes'
+import { mergeWithLiveData } from '../services/api'
+import { useApiData } from '../hooks/useApiData'
 import ThemeCard from '../components/ThemeCard'
 import DetailDrawer from '../components/DetailDrawer'
 import TrendChart from '../components/TrendChart'
@@ -7,6 +9,43 @@ import ComparisonMiniChart from '../components/ComparisonMiniChart'
 import FilterDropdown from '../components/FilterDropdown'
 import { LayoutGroup } from 'framer-motion'
 
+// ── Live/Offline status badge ─────────────────────────────────────────────────
+function DataSourceBadge({ isLive, loading, onRefresh }) {
+  if (loading) {
+    return (
+      <span className="flex items-center gap-1.5 text-xs text-on-surface-variant/60 font-medium">
+        <span className="w-2 h-2 rounded-full bg-outline/50 animate-pulse" />
+        Connecting…
+      </span>
+    )
+  }
+  if (isLive) {
+    return (
+      <button
+        onClick={onRefresh}
+        title="Click to refresh live data"
+        className="flex items-center gap-1.5 text-xs font-semibold text-tertiary-container hover:opacity-80 transition-opacity"
+      >
+        <span className="w-2 h-2 rounded-full bg-tertiary-container animate-pulse" />
+        Live data
+        <span className="material-symbols-outlined text-[14px]">refresh</span>
+      </button>
+    )
+  }
+  return (
+    <button
+      onClick={onRefresh}
+      title="API offline — click to retry"
+      className="flex items-center gap-1.5 text-xs font-medium text-on-surface-variant/60 hover:opacity-80 transition-opacity"
+    >
+      <span className="w-2 h-2 rounded-full bg-outline/40" />
+      Demo data
+      <span className="material-symbols-outlined text-[14px]">refresh</span>
+    </button>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function Overview() {
   const [filters, setFilters] = useState({
     jaar:       '2025/2026',
@@ -16,9 +55,19 @@ export default function Overview() {
     cohort:     'All',
   })
 
-  const themes = useMemo(() => getFilteredThemes(filters), [filters])
+  // 1. Mock / enriched mock data (always available)
+  const mockThemes = useMemo(() => getFilteredThemes(filters), [filters])
 
-  // Sort by percentage and assign sizes dynamically so layout reflects frequency
+  // 2. Live API data (may be null when offline)
+  const { themes: liveThemes, isLive, loading, refresh } = useApiData(filters)
+
+  // 3. Merge: live data overlays mock where theme IDs match
+  const themes = useMemo(
+    () => mergeWithLiveData(mockThemes, liveThemes),
+    [mockThemes, liveThemes],
+  )
+
+  // Sort by percentage and assign bento sizes dynamically
   const bentoThemes = useMemo(() => {
     const sorted = [...themes].sort((a, b) => b.percentage - a.percentage)
     return sorted.map((t, i) => ({
@@ -41,11 +90,9 @@ export default function Overview() {
   return (
     <main className="max-w-[1280px] mx-auto px-4 py-6 md:px-8 md:py-8 flex flex-col gap-6">
 
-      {/* ── Filters bar — full width, replaces the old h1 ── */}
+      {/* ── Filters bar ── */}
       <div className="relative z-20 bg-surface-container-lowest/85 glass-panel shadow-editorial rounded-2xl px-5 py-4">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
-          {/* Title */}
-          {/* Filter dropdowns — horizontal row */}
           <div className="flex flex-wrap md:flex-nowrap gap-3 flex-1">
             <div className="flex-1 min-w-[130px]">
               <FilterDropdown
@@ -93,6 +140,11 @@ export default function Overview() {
               />
             </div>
           </div>
+
+          {/* Live / Offline badge */}
+          <div className="shrink-0">
+            <DataSourceBadge isLive={isLive} loading={loading} onRefresh={refresh} />
+          </div>
         </div>
       </div>
 
@@ -109,6 +161,11 @@ export default function Overview() {
                 <h2 className="text-2xl font-bold font-headline text-primary">
                   Theme Frequency &amp; Sentiment
                 </h2>
+                {isLive && (
+                  <p className="text-xs text-tertiary-container mt-0.5">
+                    Enriched with live pipeline data
+                  </p>
+                )}
               </div>
               <div className="flex gap-3">
                 {[
@@ -125,7 +182,7 @@ export default function Overview() {
             </div>
 
             <LayoutGroup>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:grid-rows-3 md:h-[460px]">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 auto-rows-fr">
                 {bentoThemes.map((theme) => (
                   <ThemeCard
                     key={theme.id}
@@ -150,9 +207,40 @@ export default function Overview() {
             <TrendChart activeTheme={activeTheme} allThemes={themes} />
             <ComparisonMiniChart theme={activeTheme ?? themes[0]} filters={filters} />
           </section>
+
+          {/* Live response counts (only shown when API is online) */}
+          {isLive && liveThemes && liveThemes.length > 0 && (
+            <section className="bg-surface-container-lowest rounded-2xl p-5 shadow-ambient border border-outline-variant/10">
+              <div className="flex items-center gap-2 mb-4">
+                <span
+                  className="material-symbols-outlined text-base text-tertiary-container"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  hub
+                </span>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-tertiary-container">
+                  Live Pipeline — Response Counts
+                </h2>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {liveThemes.map((t) => (
+                  <div
+                    key={t.theme}
+                    className="bg-surface-container-low rounded-xl px-3 py-2 flex items-center justify-between gap-2"
+                  >
+                    <span className="text-xs text-on-surface-variant truncate">{t.theme}</span>
+                    <span className="text-sm font-bold text-primary shrink-0">{t.total}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-on-surface-variant/40 mt-3">
+                Raw counts from the NSE pipeline database · {new Date().toLocaleTimeString()}
+              </p>
+            </section>
+          )}
         </div>
 
-        {/* Right sidebar — detail drawer only */}
+        {/* Right sidebar — detail drawer */}
         <aside className="order-1 md:order-2 col-span-1 md:col-span-4 flex flex-col gap-5 md:sticky md:top-20">
           <DetailDrawer theme={activeTheme} />
 

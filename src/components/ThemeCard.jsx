@@ -38,7 +38,7 @@ export default function ThemeCard({ theme, isActive, onClick, size }) {
         layoutId={theme.id}
         transition={transition}
         onClick={onClick}
-        className={`col-span-2 md:row-span-2 ${styles.bg} rounded-xl p-4 md:p-6 flex flex-col justify-between cursor-pointer ${activeCls} border ${styles.border} min-h-[140px] md:min-h-0`}
+        className={`col-span-2 md:row-span-2 ${styles.bg} rounded-xl p-4 md:p-6 flex flex-col justify-between cursor-pointer ${activeCls} border ${styles.border} min-h-[160px]`}
       >
         <div className="flex justify-between items-start">
           <span
@@ -75,7 +75,7 @@ export default function ThemeCard({ theme, isActive, onClick, size }) {
         layoutId={theme.id}
         transition={transition}
         onClick={onClick}
-        className={`col-span-2 ${styles.bg} rounded-xl p-4 md:p-5 flex flex-col justify-between cursor-pointer ${activeCls} border ${styles.border}`}
+        className={`col-span-2 ${styles.bg} rounded-xl p-4 md:p-5 flex flex-col justify-between cursor-pointer ${activeCls} border ${styles.border} min-h-[120px]`}
       >
         <div className="flex justify-between items-start">
           <span className={`material-symbols-outlined text-2xl ${styles.icon}`}>{theme.icon}</span>
@@ -100,7 +100,7 @@ export default function ThemeCard({ theme, isActive, onClick, size }) {
       layoutId={theme.id}
       transition={transition}
       onClick={onClick}
-      className={`${styles.bg} rounded-xl p-3 md:p-4 flex flex-col justify-between cursor-pointer ${activeCls} border ${styles.border}`}
+      className={`${styles.bg} rounded-xl p-3 md:p-4 flex flex-col justify-between cursor-pointer ${activeCls} border ${styles.border} min-h-[110px]`}
     >
       <div className="flex justify-between items-start">
         <span className={`material-symbols-outlined text-xl ${styles.icon}`}>{theme.icon}</span>
