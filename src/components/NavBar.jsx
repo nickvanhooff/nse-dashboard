@@ -19,6 +19,18 @@ export default function NavBar() {
           >
             Overview
           </NavLink>
+          <NavLink
+            to="/presentatie"
+            className={({ isActive }) =>
+              `font-headline font-bold text-sm md:text-base tracking-tight transition-colors pb-1 ${
+                isActive
+                  ? 'text-primary-container border-b-2 border-primary-container'
+                  : 'text-on-surface-variant hover:text-primary'
+              }`
+            }
+          >
+            Presentatie
+          </NavLink>
         </div>
       </div>
       <div className="flex items-center gap-2">

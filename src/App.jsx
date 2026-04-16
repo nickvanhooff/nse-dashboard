@@ -3,6 +3,7 @@ import NavBar from './components/NavBar'
 import Overview from './pages/Overview'
 import Vergelijken from './pages/Vergelijken'
 import ThemeDetail from './pages/ThemeDetail'
+import Presentatie from './pages/Presentatie'
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
           <Route path="/" element={<Overview />} />
           <Route path="/vergelijken" element={<Vergelijken />} />
           <Route path="/thema/:id" element={<ThemeDetail />} />
+          <Route path="/presentatie" element={<Presentatie />} />
         </Routes>
       </div>
       {/* Ambient background shapes */}
